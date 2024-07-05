@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 using namespace std;
+
 // Variables de cámara
 float camaraX = -20;
 float camaraY = 15;
@@ -23,21 +24,21 @@ float pacmanSpeed = 0.1f;
 // Variables para el ángulo de la boca
 float anguloBoca = 45.0f;
 float velocidadBoca = 1.0f;
-
-//
 float radio = sqrt(pow(camaraX, 2) + pow(camaraZ, 2));
 float angulo = acos(camaraX / radio);
 float centroY = 10;
-
-
-// Puntos que Pac-Man debe comer
 std::vector<std::pair<float, float>> puntos;
 
+// Variables globales para animación
+const float PI = 3.14159265358979323846;
+
+
+
 void inicializarLuces() {
-	GLfloat luz_ambiente[] = { 0.2, 0.2, 0.2, 1.0 };
-	GLfloat luz_difusa[] = { 0.8, 0.8, 0.8, 1.0 };
-	GLfloat luz_especular[] = { 1.0, 1.0, 1.0, 1.0 };
-	GLfloat posicion_luz[] = { 0.0, 20.0, 0.0, 1.0 };
+	GLfloat luz_ambiente[] = { 0.7, 0.7, 0.7, 1.0 };   // Intensidad mayor del ambiente
+	GLfloat luz_difusa[] = { 1.0, 1.0, 1.0, 1.0 };     // Intensidad mayor de la luz difusa
+	GLfloat luz_especular[] = { 1.0, 1.0, 1.0, 1.0 };  // Intensidad mayor de la luz especular
+	GLfloat posicion_luz[] = { 0.0, 20.0, 0.0, 1.0 };  // Ajuste de la posición de la luz
 
 	glLightfv(GL_LIGHT0, GL_AMBIENT, luz_ambiente);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, luz_difusa);
@@ -51,14 +52,12 @@ void inicializarLuces() {
 
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 }
-
 void iniciarVentana(int w, int h) {
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45, (float)w / (float)h, 1, 200);
 }
-
 void piso() {
 	glPushMatrix();
 	glBegin(GL_QUADS);
@@ -71,28 +70,96 @@ void piso() {
 	glPopMatrix();
 }
 
-void paredVertical(float x, float z, float length) {
+
+void paredVertical(float x, float z, float length, float depth) {
 	glPushMatrix();
-	glColor3ub(0, 0, 128);
+	glColor3ub(2, 10, 173);
 	glTranslatef(x, 0, z);
 	glBegin(GL_QUADS);
+
+	// Cara frontal
 	glVertex3f(-0.5, 0.0, 0.0);
 	glVertex3f(-0.5, 10.0, 0.0);
 	glVertex3f(-0.5, 10.0, length);
 	glVertex3f(-0.5, 0.0, length);
+
+	// Cara trasera
+	glVertex3f(-0.5 + depth, 0.0, 0.0);
+	glVertex3f(-0.5 + depth, 10.0, 0.0);
+	glVertex3f(-0.5 + depth, 10.0, length);
+	glVertex3f(-0.5 + depth, 0.0, length);
+
+	// Cara izquierda
+	glVertex3f(-0.5, 0.0, 0.0);
+	glVertex3f(-0.5, 10.0, 0.0);
+	glVertex3f(-0.5 + depth, 10.0, 0.0);
+	glVertex3f(-0.5 + depth, 0.0, 0.0);
+
+	// Cara derecha
+	glVertex3f(-0.5, 0.0, length);
+	glVertex3f(-0.5, 10.0, length);
+	glVertex3f(-0.5 + depth, 10.0, length);
+	glVertex3f(-0.5 + depth, 0.0, length);
+
+	// Cara superior
+	glColor3ub(2, 62, 223);
+	glVertex3f(-0.5, 10.0, 0.0);
+	glVertex3f(-0.5, 10.0, length);
+	glVertex3f(-0.5 + depth, 10.0, length);
+	glVertex3f(-0.5 + depth, 10.0, 0.0);
+
+	// Cara inferior
+	glVertex3f(-0.5, 0.0, 0.0);
+	glVertex3f(-0.5, 0.0, length);
+	glVertex3f(-0.5 + depth, 0.0, length);
+	glVertex3f(-0.5 + depth, 0.0, 0.0);
+
 	glEnd();
 	glPopMatrix();
 }
-
-void paredHorizontal(float x, float z, float length) {
+void paredHorizontal(float x, float z, float length, float depth) {
 	glPushMatrix();
-	glColor3ub(0, 0, 128);
+	glColor3ub(2, 10, 173);
 	glTranslatef(x, 0, z);
 	glBegin(GL_QUADS);
+
+	// Cara frontal
 	glVertex3f(0.0, 0.0, -0.5);
 	glVertex3f(0.0, 10.0, -0.5);
 	glVertex3f(length, 10.0, -0.5);
 	glVertex3f(length, 0.0, -0.5);
+
+	// Cara trasera
+	glVertex3f(0.0, 0.0, -0.5 + depth);
+	glVertex3f(0.0, 10.0, -0.5 + depth);
+	glVertex3f(length, 10.0, -0.5 + depth);
+	glVertex3f(length, 0.0, -0.5 + depth);
+
+	// Cara izquierda
+	glVertex3f(0.0, 0.0, -0.5);
+	glVertex3f(0.0, 10.0, -0.5);
+	glVertex3f(0.0, 10.0, -0.5 + depth);
+	glVertex3f(0.0, 0.0, -0.5 + depth);
+
+	// Cara derecha
+	glVertex3f(length, 0.0, -0.5);
+	glVertex3f(length, 10.0, -0.5);
+	glVertex3f(length, 10.0, -0.5 + depth);
+	glVertex3f(length, 0.0, -0.5 + depth);
+
+	// Cara superior
+	glColor3ub(2, 62, 223);
+	glVertex3f(0.0, 10.0, -0.5);
+	glVertex3f(0.0, 10.0, -0.5 + depth);
+	glVertex3f(length, 10.0, -0.5 + depth);
+	glVertex3f(length, 10.0, -0.5);
+
+	// Cara inferior
+	glVertex3f(0.0, 0.0, -0.5);
+	glVertex3f(0.0, 0.0, -0.5 + depth);
+	glVertex3f(length, 0.0, -0.5 + depth);
+	glVertex3f(length, 0.0, -0.5);
+
 	glEnd();
 	glPopMatrix();
 }
@@ -100,43 +167,11 @@ void paredHorizontal(float x, float z, float length) {
 // Puntos Amarillos
 void drawDot(float x, float z) {
 	glPushMatrix();
-	glColor3ub(255, 255, 0);
-	glTranslatef(x, 0, z);
-	glutSolidSphere(0.5, 20, 20);
+	glColor3ub(217, 141, 65);
+	glTranslatef(x, 2, z);
+	glutSolidSphere(1, 20, 20);
 	glPopMatrix();
 }
-
-void ojosPacman() {
-	// Ojo izquierdo
-	glPushMatrix();
-	glColor3ub(0, 0, 0);
-	glTranslatef(-1.5, 1.5, -1.0);
-	glutSolidSphere(0.5, 20, 20);
-	glPopMatrix();
-
-	// Ojo Derecho
-	glPushMatrix();
-	glColor3ub(0, 0, 0);
-	glTranslatef(1.5, 1.5, -1.0);
-	glutSolidSphere(0.5, 20, 20);
-	glPopMatrix();
-}
-
-void bocaPacman() {
-	//boca
-	glPushMatrix();
-	glColor3ub(0, 0, 0);
-	glTranslatef(0, -2, 2.5);
-	glBegin(GL_TRIANGLES);
-	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(-2, 2.5, 0.0);
-	glVertex3f(2, 2.5, 0.0);
-	glEnd();
-	glPopMatrix();
-}
-// Variables globales para animación
-const float PI = 3.14159265358979323846;
-
 // Función para dibujar una semiesfera
 void drawSemiSphere(float radius, int slices, int stacks) {
 	for (int i = 0; i <= stacks / 2; ++i) {
@@ -164,10 +199,35 @@ void drawSemiSphere(float radius, int slices, int stacks) {
 	}
 }
 
+//Pac-Man
+void ojosPacman() {
+	// Ojo izquierdo
+	glPushMatrix();
+	glColor3ub(0, 0, 0);
+	glTranslatef(-1.5, 1.5, -1.0);
+	glutSolidSphere(0.5, 20, 20);
+	glPopMatrix();
 
+	// Ojo Derecho
+	glPushMatrix();
+	glColor3ub(0, 0, 0);
+	glTranslatef(1.5, 1.5, -1.0);
+	glutSolidSphere(0.5, 20, 20);
+	glPopMatrix();
+}
+void bocaPacman() {
+	//boca
+	glPushMatrix();
+	glColor3ub(0, 0, 0);
+	glTranslatef(0, -2, 2.5);
+	glBegin(GL_TRIANGLES);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(-2, 2.5, 0.0);
+	glVertex3f(2, 2.5, 0.0);
+	glEnd();
+	glPopMatrix();
+}
 void Pacman() {
-
-
 	glPushMatrix();
 	glRotatef(rotay, 0, 1, 0);
 	glRotatef(rotaz, 0, 0, 1);
@@ -221,6 +281,7 @@ void Fantasma(float x, float z, int r, int g, int b) {
 	glPopMatrix();
 }
 bool abrir = true;
+
 /*
 void moverPacman() {
 	pacmanZ += pacmanSpeed;
@@ -252,46 +313,51 @@ void moverPacman() {
 	}
 }
 */
+
 //Arreglo prueba laberinto Mejorado
 const int WIDTH = 800;
 const int HEIGHT = 600;
-const int FILAS = 21;
-const int COLUMNAS = 19;
+const int FILAS = 20;
+const int COLUMNAS = 20;
 
 char tablero[FILAS][COLUMNAS] = {
-	{'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
-	{'#', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#'},
-	{'#', ' ', '#', '#', '#', '#', ' ', '#', ' ', '#', '#', '#', ' ', '#', ' ', '#', '#', ' ', '#'},
-	{'#', 'O', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
-	{'#', ' ', '#', ' ', '#', '#', ' ', '#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', ' ', '#'},
-	{'#', ' ', '#', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#'},
-	{'#', ' ', '#', ' ', '#', ' ', '#', '#', ' ', '#', '#', ' ', '#', ' ', '#', '#', '#', ' ', '#'},
-	{'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
-	{'#', ' ', '#', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', ' ', '#'},
-	{'#', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', ' ', '#'},
-	{'#', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'},
-	{'#', ' ', '#', '#', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', '#', '#', '#', ' ', '#'},
-	{'#', ' ', '#', '#', '#', '#', ' ', '#', '#', ' ', ' ', '#', '#', ' ', '#', '#', '#', ' ', '#'},
-	{'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
-	{'#', ' ', '#', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#'},
-	{'#', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
-	{'#', ' ', '#', ' ', '#', '#', '#', ' ', '#', '#', '#', '#', '#', ' ', '#', '#', '#', ' ', '#'},
-	{'#', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#'},
-	{'#', ' ', '#', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#'},
-	{'#',  ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
-	{'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#','#','#'}
+	{'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+	{'#', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#'},
+	{'#', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', ' ', '#', '#'},
+	{'#', ' ', ' ', ' ', '#', ' ', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+	{'#', ' ', '#', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', '#', '#', ' ', '#', '#'},
+	{'#', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+	{'#', '#', '#', '#', ' ', '#', '#', ' ', '#', ' ', '#', ' ', '#', '#', ' ', '#', '#', '#', ' ', '#'},
+	{'#', ' ', ' ', '#', ' ', '#', ' ', ' ', '#', ' ', '#', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+	{'#', ' ', '#', '#', '#', '#', ' ', '#', '#', ' ', '#', ' ', '#', '#', '#', '#', ' ', '#', '#', '#'},
+	{'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+	{'#', '#', '#', '#', '#', '#', ' ', '#', '#', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+	{'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+	{'#', ' ', '#', '#', '#', ' ', '#', '#', '#', '#', '#', ' ', '#', '#', '#', '#', ' ', '#', '#', '#'},
+	{'#', ' ', '#', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+	{'#', ' ', '#', ' ', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#', '#'},
+	{'#', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+	{'#', '#', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+	{'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+	{'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'}
 };
 
 void drawWall(float x, float y) {
 	glBegin(GL_QUADS);
-	for (float i = 0.0f;i > -2;i -= 0.0016f) {
-		glVertex3f(x, y, i);
-		glVertex3f(x + 1.0f, y, i);
-		glVertex3f(x + 1.0f, y + 1.0f, i);
-		glVertex3f(x, y + 1.0f, i);
-	}
+	// Cara frontal de la pared
+	glVertex3f(x, y, 0.0f);
+	glVertex3f(x + 1.0f, y, 0.0f);
+	glVertex3f(x + 1.0f, y + 1.0f, 0.0f);
+	glVertex3f(x, y + 1.0f, 0.0f);
+
+	// Cara trasera de la pared (altura)
+	glVertex3f(x, y, 10.0f);  // Ajusta la altura como necesites
+	glVertex3f(x + 1.0f, y, 10.0f);  // Ajusta la altura como necesites
+	glVertex3f(x + 1.0f, y + 1.0f, 10.0f);  // Ajusta la altura como necesites
+	glVertex3f(x, y + 1.0f, 10.0f);  // Ajusta la altura como necesites
 	glEnd();
 }
+
 /*void drawWall(float x, float y, float height) {
 	glBegin(GL_QUADS);
 	// Cara frontal de la pared
@@ -321,116 +387,24 @@ void drawWall(float x, float y) {
 }*/
 
 void drawBoard() {
-	float startX = -COLUMNAS / 4.0f;
-	float startY = FILAS / 4.0f;
+	float startX = -COLUMNAS / 2.0f;
+	float startY = FILAS / 2.0f;
 	glPushMatrix();
 	glColor3f(1.0, 0, 0);
-	glRotated(90, 1, 0, 0);
-	glScaled(5, 5, 3);
-	int i = 0;
-	int j = 0;
-	for (i = 0; i < FILAS; ++i) {
-		for (j = 0; j < COLUMNAS; ++j) {
+	glRotated(90, 1, 0, 0);  // Rotate to fit the perspective
+	glScaled(5, 5, 3);  // Scale as needed for your view
+
+	for (int i = 0; i < FILAS; ++i) {
+		for (int j = 0; j < COLUMNAS; ++j) {
 			if (tablero[i][j] == '#') {
-				float x = startX + j;
-				float y = startY - i;
-				//float height = 10.0f; // Altura de la pared
+				float x = startX + j * 2;  // Adjust based on your maze scale
+				float y = startY - i * 2;  // Adjust based on your maze scale
 				drawWall(x, y);
 			}
 		}
 	}
-
 	glPopMatrix();
-	glPushMatrix();
-	glScaled(5,2, 5);
-	glPointSize(10);
-	glBegin(GL_POINTS);
-	glColor3f(0, 1, 0);
-	glVertex3i(0, 0, 0);
-	glEnd();glPopMatrix();
 }
-
-void dibujar() {
-	inicializarLuces();
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	gluLookAt(radio * cos(angulo), camaraY, radio * sin(angulo), 0, centroY, 0, 0, 1, 0);
-
-	//drawBoard();
-
-	glClearColor(0, 0, 0, 1);
-
-	glPushMatrix();
-	glRotated(angulo, 0, 1, 0);
-	piso();
-	
-	// Paredes del laberinto basadas en la imagen
-	paredHorizontal(-45, -45, 90); // Pared superior
-	paredHorizontal(-45, 45, 90);  // Pared inferior
-	paredVertical(-45, -45, 90);   // Pared izquierda
-	paredVertical(45, -45, 90);    // Pared derecha
-
-	// Paredes internas del laberinto (adaptadas de la imagen)
-	paredVertical(-35, -45, 20);
-	paredVertical(-35, -5, 10);
-	paredVertical(-35, 15, 20);
-
-	paredHorizontal(-35, -35, 20);
-	paredHorizontal(-35, 25, 20);
-	paredHorizontal(-35, -15, 10);
-	paredHorizontal(-35, 5, 10);
-
-	paredVertical(-15, -35, 20);
-	paredVertical(-15, -5, 20);
-	paredVertical(-15, 25, 20);
-
-	paredHorizontal(-15, -25, 10);
-	paredHorizontal(-15, 35, 10);
-
-	paredVertical(5, -45, 30);
-	paredVertical(5, -5, 10);
-	paredVertical(5, 15, 10);
-	paredVertical(5, 35, 10);
-
-	paredHorizontal(5, -15, 10);
-	paredHorizontal(5, 25, 10);
-	paredHorizontal(5, 45, 10);
-
-	paredVertical(25, -35, 20);
-	paredVertical(25, 5, 20);
-	paredVertical(25, 25, 20);
-
-	paredHorizontal(25, -25, 10);
-	paredHorizontal(25, 15, 10);
-	paredHorizontal(25, 35, 10);
-
-	paredVertical(45, -15, 30);
-	paredVertical(45, 15, 30);
-
-	paredHorizontal(45, -25, 10);
-	paredHorizontal(45, 25, 10);
-
-	
-
-	// Dibujar los puntos
-	for (auto& punto : puntos) {
-		drawDot(punto.first, punto.second);
-	}
-
-	// Dibujar Pacman y fantasmas
-
-
-
-	Fantasma(10, 10, 255, 0, 0); // Fantasma rojo
-	Fantasma(-10, -10, 0, 255, 0); // Fantasma verde
-
-	//moverPacman();
-	glPopMatrix();
-	Pacman();
-	glutSwapBuffers();
-}
-
 
 void inicializarPuntos() {
 	// Inicializar los puntos en posiciones estratégicas del laberinto
@@ -441,6 +415,85 @@ void inicializarPuntos() {
 			}
 		}
 	}
+}
+void dibujarLaberinto() {
+	// Paredes del laberinto basadas en la imagen
+	paredHorizontal(-45, -45, 90, 3); // Pared superior
+	paredHorizontal(-45, 45, 90, 3);  // Pared inferior
+	paredVertical(-45, -45, 90, 3);   // Pared izquierda
+	paredVertical(45, -45, 90, 3);    // Pared derecha
+
+	// Paredes internas del laberinto (adaptadas de la imagen)
+	paredVertical(-35, -45, 20, 3);
+	paredVertical(-35, -5, 10, 3);
+	paredVertical(-35, 15, 20, 3);
+
+	paredHorizontal(-35, -35, 20, 3);
+	paredHorizontal(-35, 25, 20, 3);
+	paredHorizontal(-35, -15, 10, 3);
+	paredHorizontal(-35, 5, 10, 3);
+
+	paredVertical(-15, -35, 20, 3);
+	paredVertical(-15, -5, 20, 3);
+	paredVertical(-15, 25, 20, 3);
+
+	paredHorizontal(-15, -25, 10, 3);
+	paredHorizontal(-15, 35, 10, 3);
+
+	paredVertical(5, -45, 30, 3);
+	paredVertical(5, -5, 10, 3);
+	paredVertical(5, 15, 10, 3);
+	paredVertical(5, 35, 10, 3);
+
+	paredHorizontal(5, -15, 10, 3);
+	paredHorizontal(5, 25, 10, 3);
+	paredHorizontal(5, 45, 10, 3);
+
+	paredVertical(25, -35, 20, 3);
+	paredVertical(25, 5, 20, 3);
+	paredVertical(25, 25, 20, 3);
+
+	paredHorizontal(25, -25, 10, 3);
+	paredHorizontal(25, 15, 10, 3);
+	paredHorizontal(25, 35, 10, 3);
+
+	paredVertical(45, -15, 30, 3);
+	paredVertical(45, 15, 30, 3);
+
+	paredHorizontal(45, -25, 10, 3);
+	paredHorizontal(45, 25, 10, 3);
+}
+void dibujar() {
+	// Función principal de dibujo
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	// Configurar la cámara
+	gluLookAt(
+		camaraX + radio * sin(angulo), camaraY, camaraZ + radio * cos(angulo),
+		0, 10, 0,
+		0, 1, 0
+	);
+	
+	// Dibujar el laberinto
+	dibujarLaberinto();
+
+	// Renderización del escenario
+	piso();
+
+	// Dibujar Pac-Man y los fantasmas
+	Pacman();
+	Fantasma(5, -5, 255, 0, 0); // Ejemplo de un fantasma rojo en posición fija
+	Fantasma(-5, 5, 0, 255, 0); // Ejemplo de un fantasma verde en posición fija
+
+	// Dibujar los puntos a recolectar
+	for (auto& punto : puntos) {
+		drawDot(punto.first, punto.second);
+	}
+
+	glutSwapBuffers();
+	drawBoard();
 }
 void teclas2(unsigned char tecla, int x, int y) {
 	switch (tecla) {
@@ -500,15 +553,13 @@ void teclas(int tecla, int x, int y) {
 	}
 	//glutPostRedisplay();
 }
-
 void idle() {
 	glutPostRedisplay();
 }
-
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-	glutInitWindowSize(800, 800);
+	glutInitWindowSize(1000, 600);
 	glutCreateWindow("Pacman 3D");
 	inicializarLuces();
 	inicializarPuntos();
