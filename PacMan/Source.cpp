@@ -31,7 +31,8 @@ std::vector<std::pair<float, float>> puntos;
 
 // Variables globales para animación
 const float PI = 3.14159265358979323846;
-
+// Puntuación
+int score = 0;
 
 
 void inicializarLuces() {
@@ -282,37 +283,65 @@ void Fantasma(float x, float z, int r, int g, int b) {
 }
 bool abrir = true;
 
-/*
-void moverPacman() {
-	pacmanZ += pacmanSpeed;
-	if (pacmanZ > 45) {
-		pacmanZ = -45; // Reinicia la posición de Pacman
-	}
+// Estructura para representar las paredes del laberinto			
+struct Pared {
+	float x, z, length;
+	bool isVertical;
 
-	if (rotax < 25) {
-		abrir = true;
-	}
-	else if (rotax > 90) {
-		abrir = false;
-	}
-	if (abrir) {
-		rotax += .8;
-	}
-	else {
-		rotax -= .8;
-	}
-
-	// Verificar colisiones con los puntos
-	for (auto it = puntos.begin(); it != puntos.end();) {
-		if (std::abs(it->first - pacmanX) < 2.5 && std::abs(it->second - pacmanZ) < 2.5) {
-			it = puntos.erase(it); // Elimina el punto si Pacman lo come
+	Pared(float x, float z, float length, bool isVertical)
+		: x(x), z(z), length(length), isVertical(isVertical) {}
+};
+// Vector para almacenar todas las paredes del laberinto
+std::vector<Pared> paredes;
+void inicializarParedes() {
+	// Agrega todas las paredes que has dibujado al vector paredes
+	paredes.push_back(Pared(-35, -45, 20, true));
+	paredes.push_back(Pared(-35, -5, 10, true));
+	paredes.push_back(Pared(-35, 15, 20, true));
+	paredes.push_back(Pared(-35, -35, 20, false));
+	paredes.push_back(Pared(-35, 25, 20, false));
+	paredes.push_back(Pared(-35, -15, 10, false));
+	paredes.push_back(Pared(-35, 5, 10, false));
+	paredes.push_back(Pared(-15, -35, 20, true));
+	paredes.push_back(Pared(-15, -5, 20, true));
+	paredes.push_back(Pared(-15, 25, 20, true));
+	paredes.push_back(Pared(-15, -25, 10, false));
+	paredes.push_back(Pared(-15, 35, 10, false));
+	paredes.push_back(Pared(5, -45, 30, true));
+	paredes.push_back(Pared(5, -5, 10, true));
+	paredes.push_back(Pared(5, 15, 10, true));
+	paredes.push_back(Pared(5, 35, 10, true));
+	paredes.push_back(Pared(5, -15, 10, false));
+	paredes.push_back(Pared(5, 25, 10, false));
+	paredes.push_back(Pared(5, 45, 10, false));
+	paredes.push_back(Pared(25, -35, 20, true));
+	paredes.push_back(Pared(25, 5, 20, true));
+	paredes.push_back(Pared(25, 25, 20, true));
+	paredes.push_back(Pared(25, -25, 10, false));
+	paredes.push_back(Pared(25, 15, 10, false));
+	paredes.push_back(Pared(25, 35, 10, false));
+	paredes.push_back(Pared(45, -15, 30, true));
+	paredes.push_back(Pared(45, 15, 30, true));
+	paredes.push_back(Pared(45, -25, 10, false));
+	paredes.push_back(Pared(45, 25, 10, false));
+}
+bool verificarColision(float nuevoPacmanX, float nuevoPacmanZ) {
+	for (std::vector<Pared>::const_iterator it = paredes.begin(); it != paredes.end(); ++it) {
+		const Pared& pared = *it;
+		if (pared.isVertical) {
+			if (std::abs(nuevoPacmanX - pared.x) < 0.5 && nuevoPacmanZ >= pared.z && nuevoPacmanZ <= (pared.z + pared.length)) {
+				return true; // Hay colisión vertical
+			}
 		}
 		else {
-			++it;
+			if (std::abs(nuevoPacmanZ - pared.z) < 0.5 && nuevoPacmanX >= pared.x && nuevoPacmanX <= (pared.x + pared.length)) {
+				return true; // Hay colisión horizontal
+			}
 		}
 	}
+	return false; // No hay colisión
 }
-*/
+
 
 //Arreglo prueba laberinto Mejorado
 const int WIDTH = 800;
@@ -358,47 +387,29 @@ void drawWall(float x, float y) {
 	glEnd();
 }
 
-/*void drawWall(float x, float y, float height) {
-	glBegin(GL_QUADS);
-	// Cara frontal de la pared
-	glVertex3f(x, y, 0.0f);
-	glVertex3f(x + 1.0f, y, 0.0f);
-	glVertex3f(x + 1.0f, y + 1.0f, 0.0f);
-	glVertex3f(x, y + 1.0f, 0.0f);
+// Función para detectar colisiones
+bool checkCollision(float x1, float y1, float z1, float x2, float y2, float z2, float threshold) {
+	float dx = x1 - x2;
+	float dy = y1 - y2;
+	float dz = z1 - z2;
+	float distance = sqrt(dx * dx + dy * dy + dz * dz);
+	return distance < threshold;
+}
 
-	// Cara trasera de la pared (altura)
-	glVertex3f(x, y, height);
-	glVertex3f(x + 1.0f, y, height);
-	glVertex3f(x + 1.0f, y + 1.0f, height);
-	glVertex3f(x, y + 1.0f, height);
-
-	// Lados de la pared
-	glVertex3f(x, y, 0.0f);
-	glVertex3f(x, y, height);
-	glVertex3f(x + 1.0f, y, height);
-	glVertex3f(x + 1.0f, y, 0.0f);
-
-	glVertex3f(x + 1.0f, y + 1.0f, 0.0f);
-	glVertex3f(x + 1.0f, y + 1.0f, height);
-	glVertex3f(x, y + 1.0f, height);
-	glVertex3f(x, y + 1.0f, 0.0f);
-
-	glEnd();
-}*/
 
 void drawBoard() {
 	float startX = -COLUMNAS / 2.0f;
 	float startY = FILAS / 2.0f;
 	glPushMatrix();
 	glColor3f(1.0, 0, 0);
-	glRotated(90, 1, 0, 0);  // Rotate to fit the perspective
-	glScaled(5, 5, 3);  // Scale as needed for your view
+	glRotated(90, 1, 0, 0);  
+	glScaled(5, 5, 3); 
 
 	for (int i = 0; i < FILAS; ++i) {
 		for (int j = 0; j < COLUMNAS; ++j) {
 			if (tablero[i][j] == '#') {
-				float x = startX + j * 2;  // Adjust based on your maze scale
-				float y = startY - i * 2;  // Adjust based on your maze scale
+				float x = startX + j * 2;  
+				float y = startY - i * 2; 
 				drawWall(x, y);
 			}
 		}
@@ -463,6 +474,71 @@ void dibujarLaberinto() {
 	paredHorizontal(45, -25, 10, 3);
 	paredHorizontal(45, 25, 10, 3);
 }
+
+void moverPacman() {
+	float nuevoPacmanX = pacmanX;
+	float nuevoPacmanZ = pacmanZ;
+
+	// Mover Pacman basado en la dirección
+	if (rotay == 180.0f) {
+		nuevoPacmanZ -= pacmanSpeed;  // Mover hacia adelante
+	}
+	else if (rotay == 0.0f) {
+		nuevoPacmanZ += pacmanSpeed;  // Mover hacia atrás
+	}
+	else if (rotay == 90.0f) {
+		nuevoPacmanX -= pacmanSpeed;  // Mover hacia la izquierda
+	}
+	else if (rotay == 270.0f) {
+		nuevoPacmanX += pacmanSpeed;  // Mover hacia la derecha
+	}
+
+	// Verificar colisión con las paredes
+	if (!verificarColision(nuevoPacmanX, nuevoPacmanZ)) {
+		pacmanX = nuevoPacmanX;
+		pacmanZ = nuevoPacmanZ;
+	}
+
+	// Limitar el movimiento de Pacman dentro de los límites del laberinto
+	if (pacmanZ > 45) {
+		pacmanZ = 45;
+	}
+	else if (pacmanZ < -45) {
+		pacmanZ = -45;
+	}
+	if (pacmanX > 45) {
+		pacmanX = 45;
+	}
+	else if (pacmanX < -45) {
+		pacmanX = -45;
+	}
+
+	if (rotax < 25) {
+		abrir = true;
+	}
+	else if (rotax > 90) {
+		abrir = false;
+	}
+	if (abrir) {
+		rotax += .8;
+	}
+	else {
+		rotax -= .8;
+	}
+
+	for (std::vector<std::pair<float, float> >::iterator it = puntos.begin(); it != puntos.end();) {
+		if (std::abs(it->first - pacmanX) < 2.5 && std::abs(it->second - pacmanZ) < 2.5) {
+			it = puntos.erase(it); 
+			score += 10; 
+		}
+		else {
+			++it;
+		}
+	}
+}
+
+
+
 void dibujar() {
 	// Función principal de dibujo
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -484,6 +560,7 @@ void dibujar() {
 
 	// Dibujar Pac-Man y los fantasmas
 	Pacman();
+	moverPacman();
 	Fantasma(5, -5, 255, 0, 0); // Ejemplo de un fantasma rojo en posición fija
 	Fantasma(-5, 5, 0, 255, 0); // Ejemplo de un fantasma verde en posición fija
 
